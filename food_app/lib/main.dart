@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_card_swiper/flutter_card_swiper.dart'; // Import the package
 
 void main() {
   runApp(const MyApp());
@@ -7,116 +8,258 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Tinder-like Food Swiper'),
+        ),
+        body: const FoodCardSwiperScreen(),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class FoodItem {
+  final String name;
+  final String imageUrl;
+  final String description;
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  FoodItem({required this.name, required this.imageUrl, required this.description});
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class FoodCardSwiperScreen extends StatefulWidget {
+  const FoodCardSwiperScreen({super.key});
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  State<FoodCardSwiperScreen> createState() => _FoodCardSwiperScreenState();
+}
+
+class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
+  final CardSwiperController controller = CardSwiperController();
+
+  // Our list of food items
+  final List<FoodItem> foodItems = [
+    FoodItem(
+      name: 'Spaghetti Carbonara',
+      imageUrl: 'https://via.placeholder.com/400x400/FF5733/FFFFFF?text=Carbonara',
+      description: 'Classic Italian pasta dish with eggs, hard cheese, cured pork, and black pepper.',
+    ),
+    FoodItem(
+      name: 'Sushi Platter',
+      imageUrl: 'https://via.placeholder.com/400x400/3366FF/FFFFFF?text=Sushi',
+      description: 'A delightful assortment of fresh sushi and sashimi.',
+    ),
+    FoodItem(
+      name: 'Indian Curry',
+      imageUrl: 'https://via.placeholder.com/400x400/33FF57/FFFFFF?text=Curry',
+      description: 'A rich and aromatic curry, perfect with rice or naan.',
+    ),
+    FoodItem(
+      name: 'Mexican Tacos',
+      imageUrl: 'https://via.placeholder.com/400x400/FFFF33/000000?text=Tacos',
+      description: 'Delicious tacos with various fillings and fresh salsa.',
+    ),
+  ];
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+    // Get the total screen width
+    final double screenWidth = MediaQuery.of(context).size.width;
+
+    // Calculate the horizontal margin (5% on each side, so 10% total)
+    final double horizontalMarginPercentage = 0.05; // 5%
+    final double totalHorizontalMargin = screenWidth * (horizontalMarginPercentage * 2);
+
+    // Calculate the width and height of the card
+    final double cardWidth = screenWidth - totalHorizontalMargin;
+    // We'll make the card slightly taller than a perfect square to leave room for text below the image.
+    // Adjust this value as needed to fit your design.
+    final double cardHeight = cardWidth * 1.2; // Example: 20% taller than its width
+
+    return Column(
+      children: [
+        Expanded(
+          child: CardSwiper(
+            controller: controller,
+            cardsCount: foodItems.length,
+            numberOfCardsDisplayed: 2, // Shows the current card and a glimpse of the next
+            // Updated onSwipe signature for flutter_card_swiper ^7.0.0
+            onSwipe: (int index, int? previousIndex, CardSwiperDirection direction) {
+              final String foodName = foodItems[index].name;
+              if (direction == CardSwiperDirection.right) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Swiped right! Interested in $foodName')),
+                );
+                print('Swiped right! Interested in $foodName');
+              } else if (direction == CardSwiperDirection.left) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Swiped left! Not interested in $foodName')),
+                );
+                print('Swiped left! Not interested in $foodName');
+              } else {
+                print('Swiped $direction for $foodName');
+              }
+              return true; // Return true to allow the swipe, false to prevent it
+            },
+            // Updated onUndo signature for flutter_card_swiper ^7.0.0
+            onUndo: (int? previousIndex, int index, CardSwiperDirection direction) {
+              print('Undone $direction from index $index (previously $previousIndex)');
+              return true;
+            },
+            padding: const EdgeInsets.symmetric(vertical: 20.0), // Padding around the swiper itself
+            cardBuilder: (
+              BuildContext context,
+              int index,
+              int horizontalThresholdPercentage,
+              int verticalThresholdPercentage,
+            ) {
+              final FoodItem foodItem = foodItems[index];
+
+              return GestureDetector(
+                onTap: () {
+                  // Handle tap for more info
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Tapped on ${foodItem.name} for more info!')),
+                  );
+                  print('Tapped on ${foodItem.name}');
+                  // You would typically navigate to a detail screen here
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (context) => FoodDetailScreen(foodItem: foodItem),
+                  //   ),
+                  // );
+                },
+                child: Card(
+                  elevation: 8.0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
+                  ),
+                  margin: EdgeInsets.zero, // CardSwiper handles the spacing
+                  child: Container(
+                    width: cardWidth,
+                    height: cardHeight, // Use the calculated cardHeight
+                    child: Column(
+                      children: [
+                        Expanded(
+                          flex: 3, // Image takes up 3 parts of the height
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15.0)),
+                                  child: Image.network(
+                                    foodItem.imageUrl,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          // Corrected property names for ImageChunkEvent
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey, // Fallback color for error
+                                        child: const Center(
+                                          child: Icon(Icons.broken_image, color: Colors.white, size: 50),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                              Positioned.fill(
+                                child: Container(
+                                  color: Colors.black.withOpacity(0.3), // Dark overlay for text readability
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Image Placeholder', // This text can be removed if you have actual images
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1, // Text details take up 1 part of the height
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  foodItem.name,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  foodItem.description,
+                                  maxLines: 2, // Limit description to 2 lines
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[700], // Changed from pink to grey for better contrast
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        // Example buttons to manually swipe (optional)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 20.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              FloatingActionButton(
+                heroTag: 'leftButton',
+                onPressed: () {
+                  controller.swipe(CardSwiperDirection.left);
+                },
+                backgroundColor: Colors.red,
+                child: const Icon(Icons.close, color: Colors.white),
+              ),
+              FloatingActionButton(
+                heroTag: 'rightButton',
+                onPressed: () {
+                  controller.swipe(CardSwiperDirection.right);
+                },
+                backgroundColor: Colors.green,
+                child: const Icon(Icons.favorite, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
