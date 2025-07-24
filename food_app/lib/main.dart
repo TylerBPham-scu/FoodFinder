@@ -1,6 +1,10 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:food_app/food_card.dart'; // FoodItem and FoodCard definition
+import 'package:food_app/food_detail_screen.dart'; // Import the new detail screen
+
+// FoodItem class should now be in food_card.dart, so it's removed from here if it was present.
 
 void main() {
   runApp(const MyApp());
@@ -14,28 +18,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Food Swiper'),
+          title: const Text('Tinder-like Food Swiper'),
         ),
         body: const FoodCardSwiperScreen(),
       ),
     );
   }
-}
-
-class FoodItem {
-  final String name;
-  final String imageUrl;
-  final String description;
-  final String restaurantAddress;
-  final String addressLink;
-
-  FoodItem({
-    required this.name,
-    required this.imageUrl,
-    required this.description,
-    required this.restaurantAddress,
-    required this.addressLink,
-  });
 }
 
 class FoodCardSwiperScreen extends StatefulWidget {
@@ -47,48 +35,36 @@ class FoodCardSwiperScreen extends StatefulWidget {
 
 class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
   final CardSwiperController controller = CardSwiperController();
-  bool allCardsSwiped = false; // New state variable to track if cards are done
-
-  Future<void> _launchUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not launch $url')),
-        );
-      }
-      throw Exception('Could not launch $url');
-    }
-  }
+  bool allCardsSwiped = false;
 
   final List<FoodItem> foodItems = [
     FoodItem(
       name: 'Spaghetti Carbonara',
       imageUrl: 'https://via.placeholder.com/400x400/FF5733/FFFFFF?text=Carbonara',
-      description: 'Classic Italian pasta dish with eggs, hard cheese, cured pork, and black pepper.',
+      description: 'Classic Italian pasta dish with eggs, hard cheese, cured pork, and black pepper. A timeless dish originating from Rome, known for its rich and creamy texture without using cream. It relies on the emulsification of egg yolks, Pecorino Romano cheese, cured guanciale or pancetta, and black pepper. Best served immediately upon preparation.',
       restaurantAddress: '123 Pasta Lane, Rome',
-      addressLink: 'https://maps.app.goo.gl/YourActualCarbonaraMapLink', // REPLACE with actual map link
+      addressLink: 'https://www.google.com/maps/search/?api=1&query=123+Pasta+Lane,+Rome', // REAL map link example
     ),
     FoodItem(
       name: 'Sushi Platter',
       imageUrl: 'https://via.placeholder.com/400x400/3366FF/FFFFFF?text=Sushi',
-      description: 'A delightful assortment of fresh sushi and sashimi.',
+      description: 'A delightful assortment of fresh sushi and sashimi, prepared by expert chefs. Features a variety of nigiri, maki, and fresh raw fish slices. Accompanied by soy sauce, wasabi, and pickled ginger for a complete experience. Perfect for a light yet satisfying meal.',
       restaurantAddress: '456 Sushi Blvd, Tokyo',
-      addressLink: 'https://maps.app.goo.gl/YourActualSushiMapLink', // REPLACE with actual map link
+      addressLink: 'https://www.google.com/maps/search/?api=1&query=456+Sushi+Blvd,+Tokyo', // REAL map link example
     ),
     FoodItem(
       name: 'Indian Curry',
       imageUrl: 'https://via.placeholder.com/400x400/33FF57/FFFFFF?text=Curry',
-      description: 'A rich and aromatic curry, perfect with rice or naan.',
+      description: 'A rich and aromatic curry, slow-cooked to perfection with a blend of exotic spices and tender meat/vegetables. This dish embodies the vibrant flavors of traditional Indian cuisine, offering a comforting and flavorful experience. Best enjoyed with fragrant basmati rice or warm naan bread.',
       restaurantAddress: '789 Spice Street, Delhi',
-      addressLink: 'https://maps.app.goo.gl/YourActualCurryMapLink', // REPLACE with actual map link
+      addressLink: 'https://www.google.com/maps/search/?api=1&query=789+Spice+Street,+Delhi', // REAL map link example
     ),
     FoodItem(
       name: 'Mexican Tacos',
       imageUrl: 'https://via.placeholder.com/400x400/FFFF33/000000?text=Tacos',
-      description: 'Delicious tacos with various fillings and fresh salsa.',
+      description: 'Delicious corn tortillas filled with various fillings like seasoned meat, fresh vegetables, cilantro, and onions. Topped with a squeeze of lime and spicy salsa, these tacos offer an authentic taste of Mexican street food. A perfect blend of savory, fresh, and zesty flavors.',
       restaurantAddress: '101 Taco Road, Mexico City',
-      addressLink: 'https://maps.app.goo.gl/YourActualTacosMapLink', // REPLACE with actual map link
+      addressLink: 'https://www.google.com/maps/search/?api=1&query=101+Taco+Road,+Mexico+City', // REAL map link example
     ),
   ];
 
@@ -100,9 +76,6 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Removed manual cardWidth/cardHeight calculation and rely on CardSwiper's padding for size.
-    // The card will expand to fill the space within the CardSwiper's padding.
-
     return Column(
       children: [
         Expanded(
@@ -125,13 +98,10 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                       const SizedBox(height: 30),
                       ElevatedButton.icon(
                         onPressed: () {
-                          // Reset the state to show cards again (useful for demonstration)
                           setState(() {
                             allCardsSwiped = false;
-                            // Optionally, if you modify the foodItems list (e.g., remove items),
-                            // you might need to re-initialize or reset the controller here.
-                            // For this example, since foodItems is final, just setting
-                            // allCardsSwiped to false is enough.
+                            // Optionally, reset the swiper state if needed more comprehensively
+                            // controller.next(); // or similar if you want to explicitly reset
                           });
                         },
                         icon: const Icon(Icons.refresh),
@@ -166,7 +136,6 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Undid swipe on ${foodItems[index].name}')),
                     );
-                    // If you undo after all cards were swiped, make sure the message is gone
                     if (allCardsSwiped) {
                       setState(() {
                         allCardsSwiped = false;
@@ -174,9 +143,7 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                     }
                     return true;
                   },
-                  // Use horizontal and vertical padding to define the card size and center it
                   padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                  // New: onEnd callback to detect when all cards are swiped
                   onEnd: () {
                     print('All cards have been swiped!');
                     setState(() {
@@ -190,134 +157,21 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                     int verticalThresholdPercentage,
                   ) {
                     final FoodItem foodItem = foodItems[index];
-
-                    return GestureDetector(
+                    return FoodCard(
+                      foodItem: foodItem,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Tapped on ${foodItem.name} for more info!')),
+                        // Navigate to the detail screen when the card is tapped
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FoodDetailScreen(foodItem: foodItem),
+                          ),
                         );
-                        print('Tapped on ${foodItem.name}');
                       },
-                      child: Card(
-                        elevation: 8.0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                        margin: EdgeInsets.zero, // Keep margin zero, padding property handles spacing
-                        child: Column(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(15.0)),
-                                      child: Image.network(
-                                        foodItem.imageUrl,
-                                        fit: BoxFit.cover,
-                                        loadingBuilder: (context, child, loadingProgress) {
-                                          if (loadingProgress == null) return child;
-                                          return Center(
-                                            child: CircularProgressIndicator(
-                                              value: loadingProgress.expectedTotalBytes != null
-                                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                                  : null,
-                                            ),
-                                          );
-                                        },
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            color: Colors.grey,
-                                            child: const Center(
-                                              child: Icon(Icons.broken_image, color: Colors.white, size: 50),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned.fill(
-                                    child: Container(
-                                      color: Colors.black.withOpacity(0.3),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        foodItem.name,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      foodItem.name,
-                                      style: const TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      foodItem.description,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey[700],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      '📍 ${foodItem.restaurantAddress}',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    GestureDetector(
-                                      onTap: () async {
-                                        await _launchUrl(foodItem.addressLink);
-                                      },
-                                      child: const Row(
-                                        children: [
-                                          Icon(Icons.location_on, color: Colors.blue, size: 18),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            'View on Map',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.blue,
-                                              decoration: TextDecoration.underline,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     );
                   },
                 ),
         ),
-        // Buttons are only shown if not all cards are swiped
         if (!allCardsSwiped)
           Padding(
             padding: const EdgeInsets.only(bottom: 20.0),
