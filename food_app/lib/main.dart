@@ -2,7 +2,7 @@
 
 // FoodItem class should now be in food_card.dart, so it's removed from here if it was present.
 import 'package:flutter/material.dart';
-import 'food_swiper.dart';
+import 'food_cards/food_swiper.dart';
 
 
 void main() {

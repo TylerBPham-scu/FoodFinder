@@ -1,8 +1,8 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
-import 'package:food_app/food_card.dart'; // FoodItem and FoodCard definition
-import 'package:food_app/food_detail_screen.dart';
+import 'package:food_app/food_cards/food_card.dart'; // FoodItem and FoodCard definition
+import 'package:food_app/food_cards/food_detail_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -93,6 +93,7 @@ Widget build(BuildContext context) {
                   return true;
                 },
                 onEnd: () => setState(() => allCardsSwiped = true),
+                //change this for design
                 cardBuilder: (context, index, _, __) {
                   final item = foodItems[index];
                   return FoodCard(
