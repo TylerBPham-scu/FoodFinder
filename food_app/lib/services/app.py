@@ -1,9 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from restaurant_data_pull import FirestoreClient
+import json
+
+fs = FirestoreClient()
+restaurant_json = fs.get_restaurants()
+print(restaurant_json[0])
 
 app = Flask(__name__)
 CORS(app)
-
 
 
 @app.route('/')
@@ -12,22 +17,7 @@ def home():
 
 @app.route('/cards', methods=['GET'])
 def get_cards():
-    return jsonify([
-        {
-            "name": "Spaghetti Carbonara",
-            "imageUrl": "https://via.placeholder.com/400x400/FF5733/FFFFFF?text=Carbonara",
-            "description": "Classic Italian pasta dish with eggs, cheese, and pork.",
-            "restaurantAddress": "123 Pasta Lane, Rome",
-            "addressLink": "https://www.google.com/maps/search/?api=1&query=123+Pasta+Lane,+Rome",
-        },
-        {
-            "name": "Sushi Platter",
-            "imageUrl": "https://via.placeholder.com/400x400/3366FF/FFFFFF?text=Sushi",
-            "description": "Fresh sushi and sashimi.",
-            "restaurantAddress": "456 Sushi Blvd, Tokyo",
-            "addressLink": "https://www.google.com/maps/search/?api=1&query=456+Sushi+Blvd,+Tokyo",
-        }
-    ])
+    return jsonify(restaurant_json)
 
 @app.route('/swipe', methods=['POST'])
 def swipe():
