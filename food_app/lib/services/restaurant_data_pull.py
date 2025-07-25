@@ -1,7 +1,6 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-import pandas as pd
 import json
 
 ''' Class for Firestore functions to pull data
@@ -13,7 +12,7 @@ fs = FirestoreClient()
 '''
 class FirestoreClient:
     def __init__(self):
-        self.cred = credentials.Certificate('C:\\Users\\tyler\\OneDrive\\Desktop\\Food_app\\food_app\\lib\\services\\foodapptesting_key.json')
+        self.cred = credentials.Certificate('C:\\Users\\Michael\\Food_app\\food_app\\lib\\services\\foodapptesting_key.json')
         self.app = firebase_admin.initialize_app(self.cred)
         self.db = firestore.client()
 
