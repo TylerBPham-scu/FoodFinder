@@ -7,7 +7,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class FoodCardSwiperScreen extends StatefulWidget {
-  const FoodCardSwiperScreen({super.key});
+  final String username;
+
+  const FoodCardSwiperScreen({super.key, required this.username});
 
   @override
   State<FoodCardSwiperScreen> createState() => _FoodCardSwiperScreenState();
@@ -87,6 +89,7 @@ Widget build(BuildContext context) {
                       'card_id': index,
                       'direction': direction,
                       'name': item.name,
+                      'user': widget.username,
                     }),
                   );
 

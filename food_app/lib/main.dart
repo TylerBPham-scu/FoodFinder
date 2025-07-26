@@ -19,7 +19,8 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Tinder-like Food Swiper'),
         ),
-        body: const FoodCardSwiperScreen(),
+        // login logic will do a builder view here and need ot got the food card swiper screen from here 
+        body: const FoodCardSwiperScreen(username: "David Tang"),
       ),
     );
   }
