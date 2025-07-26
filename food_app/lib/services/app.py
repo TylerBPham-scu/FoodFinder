@@ -15,7 +15,7 @@ fs = FirestoreClient()
 def home():
     return "Flask backend is running!"
 
-
+# change this for the ml logic as we want to change get restuants to ml logic
 @app.route('/cards', methods=['GET'])
 def get_cards():
     try:
