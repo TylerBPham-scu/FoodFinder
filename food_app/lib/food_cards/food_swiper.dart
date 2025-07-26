@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:food_app/food_cards/food_card.dart'; // FoodItem and FoodCard definition
@@ -39,103 +38,124 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
           foodItems = data.map((e) => FoodItem.fromJson(e)).toList();
           isLoading = false;
         });
+      } else {
+        setState(() {
+          foodItems = [];
+          isLoading = false;
+        });
       }
     } catch (e) {
       print('Fetch error: $e');
+      setState(() {
+        foodItems = [];
+        isLoading = false;
+      });
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  if (isLoading) return const Center(child: CircularProgressIndicator());
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-  return Column(
-    children: [
-      Expanded(
-        child: allCardsSwiped
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('All cards swiped!'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        setState(() {
-                          isLoading = true;
-                          allCardsSwiped = false;
-                        });
-                        await fetchFoodItems();
-                      },
-                      child: const Text('Reload Cards'),
-                    ),
-                  ],
-                ),
-              )
-            : CardSwiper(
-                controller: controller,
-                cardsCount: foodItems.length,
-                isLoop: true, // <-- Enable looping here
-                onSwipe: (index, _, dir) {
-                  final item = foodItems[index];
-                  final direction = dir == CardSwiperDirection.right
-                      ? "right"
-                      : "left";
-
-                  http.post(
-                    Uri.parse('http://127.0.0.1:5000/swipe'),
-                    headers: {'Content-Type': 'application/json'},
-                    body: jsonEncode({
-                      'card_id': index,
-                      'direction': direction,
-                      'name': item.name,
-                      'user': widget.username,
-                    }),
-                  );
-
-                  return true;
-                },
-                onEnd: () => setState(() => allCardsSwiped = true),
-                //change this for design
-                cardBuilder: (context, index, _, __) {
-                  final item = foodItems[index];
-                  return FoodCard(
-                    foodItem: item,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => FoodDetailScreen(foodItem: item),
-                      ),
-                    ),
-                  );
-                },
-              ),
-      ),
-      if (!allCardsSwiped)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              FloatingActionButton(
-                onPressed: () => controller.swipe(CardSwiperDirection.left),
-                backgroundColor: Colors.red,
-                child: const Icon(Icons.close),
-              ),
-              FloatingActionButton(
-                onPressed: () => controller.undo(),
-                backgroundColor: Colors.grey,
-                child: const Icon(Icons.undo),
-              ),
-              FloatingActionButton(
-                onPressed: () => controller.swipe(CardSwiperDirection.right),
-                backgroundColor: Colors.green,
-                child: const Icon(Icons.favorite),
-              ),
-            ],
-          ),
+    // Show message if no cards available at all
+    if (foodItems.isEmpty) {
+      return Center(
+        child: Text(
+          'There are no restaurants near you.',
+          style: const TextStyle(fontSize: 18),
+          textAlign: TextAlign.center,
         ),
-    ],
-  );
-}
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: allCardsSwiped
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('All cards swiped!'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () async {
+                          setState(() {
+                            isLoading = true;
+                            allCardsSwiped = false;
+                          });
+                          await fetchFoodItems();
+                        },
+                        child: const Text('Reload Cards'),
+                      ),
+                    ],
+                  ),
+                )
+              : CardSwiper(
+                  controller: controller,
+                  cardsCount: foodItems.length,
+                  isLoop: true, // Enable looping here
+                  onSwipe: (index, _, dir) {
+                    final item = foodItems[index];
+                    final direction = dir == CardSwiperDirection.right
+                        ? "right"
+                        : "left";
+
+                    http.post(
+                      Uri.parse('http://127.0.0.1:5000/swipe'),
+                      headers: {'Content-Type': 'application/json'},
+                      body: jsonEncode({
+                        'card_id': index,
+                        'direction': direction,
+                        'name': item.name,
+                        'user': widget.username,
+                      }),
+                    );
+
+                    return true;
+                  },
+                  onEnd: () => setState(() => allCardsSwiped = true),
+                  cardBuilder: (context, index, _, __) {
+                    final item = foodItems[index];
+                    return FoodCard(
+                      foodItem: item,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FoodDetailScreen(foodItem: item),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+        if (!allCardsSwiped)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                FloatingActionButton(
+                  onPressed: () => controller.swipe(CardSwiperDirection.left),
+                  backgroundColor: Colors.red,
+                  child: const Icon(Icons.close),
+                ),
+                FloatingActionButton(
+                  onPressed: () => controller.undo(),
+                  backgroundColor: Colors.grey,
+                  child: const Icon(Icons.undo),
+                ),
+                FloatingActionButton(
+                  onPressed: () => controller.swipe(CardSwiperDirection.right),
+                  backgroundColor: Colors.green,
+                  child: const Icon(Icons.favorite),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
 }
