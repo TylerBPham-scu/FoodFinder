@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_app/User_files/login.dart';
 import 'food_cards/food_swiper.dart';
 import 'Upload/image_picker.dart';
+import 'User_files/location.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,9 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Food App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       home: const LoginScreen(),
     );
   }
@@ -43,6 +42,7 @@ class _MainScreenState extends State<MainScreen> {
     _pages = <Widget>[
       FoodCardSwiperScreen(username: widget.username),
       ImagePickerScreen(),
+      LocationScreen(username: widget.username),
       // Add more pages here if needed
     ];
   }
@@ -56,25 +56,20 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Welcome, ${widget.username}!'),
-      ),
+      appBar: AppBar(title: Text('Welcome, ${widget.username}!')),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.fastfood), label: 'Swiper'),
+          BottomNavigationBarItem(icon: Icon(Icons.image), label: 'Upload'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.fastfood),
-            label: 'Swiper',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.image),
-            label: 'Upload',
+            icon: Icon(Icons.location_on),
+            label: 'Location',
           ),
         ],
       ),
     );
   }
 }
-

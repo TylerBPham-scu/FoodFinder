@@ -110,6 +110,49 @@ def register():
 
 
 
+
+@app.route('/update_location', methods=['POST'])
+def update_location():
+    data = request.get_json()
+    username = data.get('username')
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+
+    if not username or latitude is None or longitude is None:
+        return jsonify({'error': 'Missing username or location data'}), 400
+
+    try:
+        users_ref = fs.db.collection('users')
+        query = users_ref.where('username', '==', username).limit(1).stream()
+
+        user_doc = None
+        for doc in query:
+            user_doc = doc
+            break
+
+        if user_doc is None:
+            return jsonify({'error': 'User not found'}), 404
+
+        # Update user document with location
+        user_ref = users_ref.document(user_doc.id)
+        user_ref.update({
+            'location': {
+                'latitude': latitude,
+                'longitude': longitude,
+            }
+        })
+
+        return jsonify({'status': 'Location updated'}), 200
+
+    except Exception as e:
+        print(f"Error updating location: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+
+
+
+
 @app.route('/favicon.ico')
 def favicon():
     return '', 204
