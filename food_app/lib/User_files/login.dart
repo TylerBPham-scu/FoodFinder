@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:food_app/main.dart'; // update if needed
+//import 'package:food_app/main.dart'; // update if needed
 import 'package:food_app/food_cards/food_swiper.dart';
 class UserItem {
   final String id;
@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => FoodCardSwiperScreen(user: user),
+            builder: (_) => FoodCardSwiperScreen( username: '',),
           ),
         );
       } else {
