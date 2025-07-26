@@ -20,3 +20,4 @@ class FirestoreClient:
         docs = self.db.collection('restaurants').get()
         data = [doc.to_dict() for doc in docs]
         return data
+    
