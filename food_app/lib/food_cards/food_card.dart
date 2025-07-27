@@ -7,6 +7,7 @@ class FoodItem {
   final String description;
   final String restaurantAddress;
   final String addressLink;
+  final List<String> cuisines; // Added cuisines field
 
   FoodItem({
     required this.name,
@@ -14,6 +15,7 @@ class FoodItem {
     required this.description,
     required this.restaurantAddress,
     required this.addressLink,
+    required this.cuisines,
   });
 
   factory FoodItem.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class FoodItem {
       description: json['description'],
       restaurantAddress: json['restaurantAddress'],
       addressLink: json['addressLink'],
+      cuisines: List<String>.from(json['cuisines'] ?? []),
     );
   }
 }
@@ -123,6 +126,13 @@ class FoodCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Cuisine: ${foodItem.cuisines.join(', ')}',
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
                     Text('📍 ${foodItem.restaurantAddress}',
