@@ -1,11 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'food_card_refactored.dart';
-import 'food_detail_screen.dart';
-import 'dart:convert';
+import 'food_detail_screen_refactored.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';  // To use kIsWeb
-
 
 class FoodCardSwiperScreen extends StatefulWidget {
   final String username;
@@ -61,17 +59,15 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get screen width and height for responsive design
-    final screenWidth = MediaQuery.of(context).size.width; // Get screen width
-    final screenHeight = MediaQuery.of(context).size.height; // Get screen height
-    final isWeb = kIsWeb; // Check if the app is running on web
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    print(screenWidth);
+    print(screenHeight);
+    final bool isTabletOrLarger = screenWidth > 700;
 
-    // Adjust sizes based on screen size (example values, adjust as needed)
-    final buttonSize = isWeb ? 50.0 : (screenWidth * 0.12); // Buttons bigger on web
-    final cardHeight = isWeb ? screenHeight * 0.5 : screenHeight * 0.4; // Larger cards on mobile
-
-    // Adjust padding based on screen width (example values, adjust as needed)
-    final padding = screenWidth < 600 ? 8.0 : 16.0;  // Smaller padding for small devices, larger padding for bigger screens
+    final buttonSize = isTabletOrLarger ? 50.0 : 30.0;
+    final cardHeight = isTabletOrLarger ? screenHeight * 0.5 : screenHeight * 0.4;
+    final padding = screenWidth < 600 ? 8.0 : 16.0;
 
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -106,7 +102,7 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                     final item = foodItems[index];
                     return FoodCard(
                       foodItem: item,
-                      height: cardHeight, // Set card height dynamically
+                      height: cardHeight,
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -120,8 +116,7 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
         ),
         if (foodItems.isNotEmpty && !allCardsSwiped)
           Padding(
-            // Adjust padding based on screen width (Responsive padding)
-            padding: EdgeInsets.symmetric(horizontal: padding),  // Adjust padding for smaller screens
+            padding: EdgeInsets.symmetric(horizontal: padding),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -129,28 +124,19 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                   heroTag: 'dislike',
                   onPressed: () => controller.swipe(CardSwiperDirection.left),
                   backgroundColor: Colors.red,
-                  child: Icon(
-                    Icons.close,
-                    size: buttonSize, // Adjust button size based on screen width
-                  ),
+                  child: Icon(Icons.close, size: buttonSize),
                 ),
                 FloatingActionButton(
                   heroTag: 'undo',
                   onPressed: () => controller.undo(),
                   backgroundColor: Colors.grey,
-                  child: Icon(
-                    Icons.undo,
-                    size: buttonSize, // Adjust button size based on screen width
-                  ),
+                  child: Icon(Icons.undo, size: buttonSize),
                 ),
                 FloatingActionButton(
                   heroTag: 'like',
                   onPressed: () => controller.swipe(CardSwiperDirection.right),
                   backgroundColor: Colors.green,
-                  child: Icon(
-                    Icons.favorite,
-                    size: buttonSize, // Adjust button size based on screen width
-                  ),
+                  child: Icon(Icons.favorite, size: buttonSize),
                 ),
               ],
             ),

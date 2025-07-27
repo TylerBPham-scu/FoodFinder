@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:food_app/User_files/login.dart';
-import 'food_cards/food_swiper.dart';
+import 'food_cards/food_swiper_refactored.dart';
 import 'Upload/image_picker.dart';
-import 'User_files/liked_screen.dart';
-import 'User_files/interest.dart';
-import 'User_files/user_info.dart';
+import 'User_files/liked_screen_refactored.dart';
+import 'User_files/interest_refactored.dart';
+import 'User_files/user_info_refactored.dart';
 
 void main() {
   runApp(const MyApp());

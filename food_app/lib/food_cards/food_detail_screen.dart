@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:food_app/food_cards/food_card.dart';
+import 'package:food_app/food_cards/food_card_refactored.dart';
 
 class FoodDetailScreen extends StatelessWidget {
   final FoodItem foodItem;

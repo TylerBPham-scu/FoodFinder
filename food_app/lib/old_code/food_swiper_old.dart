@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
-import 'package:food_app/food_cards/food_card.dart'; // FoodItem and FoodCard definition
+import 'package:food_app/food_cards/food_card_refactored.dart'; // FoodItem and FoodCard definition
 import 'package:food_app/food_cards/food_detail_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;

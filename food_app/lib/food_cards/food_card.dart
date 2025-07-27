@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+/*
 
 class FoodItem {
   final String name;
@@ -163,3 +164,4 @@ class FoodCard extends StatelessWidget {
     );
   }
 }
+*/
