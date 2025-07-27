@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:food_app/User_files/login.dart';
-import 'food_cards/food_swiper.dart';
-import 'Upload/image_picker.dart';
-import 'User_files/liked_screen.dart';
-import 'User_files/interest.dart';
-import 'User_files/user_info.dart';
-
+import 'food_swiper_old.dart';
+import '../Upload/image_picker.dart';
+//import 'User_files/location.dart';
+import '../User_files/liked_screen.dart';
+import 'interest_old.dart';
+import '../User_files/user_info.dart';
 void main() {
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -33,7 +34,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
-  final GlobalKey<FoodCardSwiperScreenState> swiperKey = GlobalKey<FoodCardSwiperScreenState>();
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   late final List<Widget> _pages;
@@ -42,8 +43,8 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _pages = <Widget>[
-      FoodCardSwiperScreen(key: swiperKey, username: widget.username),
-      const ImagePickerScreen(),
+      FoodCardSwiperScreen(username: widget.username),
+      ImagePickerScreen(),
       LikedRestaurantsScreen(username: widget.username),
     ];
   }
@@ -55,20 +56,17 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _navigateToLocationScreen() {
-    if (Navigator.canPop(context)) Navigator.pop(context);
+    Navigator.pop(context); // close drawer
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => LocationScreen(
-          username: widget.username,
-          swiperKey: swiperKey,
-        ),
+        builder: (_) => LocationScreen(username: widget.username),
       ),
     );
   }
 
   void _navigateToProfileScreen() {
-    if (Navigator.canPop(context)) Navigator.pop(context);
+    Navigator.pop(context); // close drawer
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -76,6 +74,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
