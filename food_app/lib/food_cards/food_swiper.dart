@@ -19,6 +19,8 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
   List<FoodItem> foodItems = [];
   bool isLoading = true;
   bool allCardsSwiped = false;
+  final timestamp = DateTime.now().toIso8601String();  // Current time in ISO 8601 format
+
 
   @override
   void initState() {
@@ -111,6 +113,8 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                         'direction': direction,
                         'name': item.name,
                         'user': widget.username,
+                        'timestamp': timestamp,  // <-- add timestamp here
+
                       }),
                     );
 
