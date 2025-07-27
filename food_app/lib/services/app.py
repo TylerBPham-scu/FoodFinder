@@ -25,7 +25,45 @@ def get_cards():
     except Exception as e:
         print(f"Error fetching cards: {e}")
         return jsonify({"error": "Failed to fetch cards"}), 500
+
+
 """
+
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    data = request.get_json()
+    username = data.get('username')
+    updated_data = data.get('updatedData', {})
+
+    if not username or not updated_data:
+        return jsonify({'error': 'Invalid request'}), 400
+
+    try:
+        users_ref = fs.db.collection('users')
+        query = users_ref.where('username', '==', username).limit(1).stream()
+        user_doc = next(query, None)
+
+        if not user_doc:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_ref = users_ref.document(user_doc.id)
+
+        # Do not allow changes to 'liked' or 'likedTimestamps'
+        updated_data.pop('liked', None)
+        updated_data.pop('likedTimestamps', None)
+        updated_data.pop('preferences',None)
+
+        user_ref.update(updated_data)
+        return jsonify({'status': 'Profile updated'}), 200
+
+    except Exception as e:
+        print(f"Profile update error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+
+
 @app.route('/cards', methods=['GET'])
 def get_cards():
     try:
@@ -178,7 +216,8 @@ def register():
         new_user = {
             'username': username,
             'password': password,
-            'liked': []
+            'liked': [],
+            'avatarUrl': ''
         }
         users_ref.add(new_user)
         return jsonify({'message': 'User registered successfully'}), 201

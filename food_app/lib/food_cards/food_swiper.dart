@@ -134,16 +134,19 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 FloatingActionButton(
+                  heroTag: 'dislike_btn', 
                   onPressed: () => controller.swipe(CardSwiperDirection.left),
                   backgroundColor: Colors.red,
                   child: const Icon(Icons.close),
                 ),
                 FloatingActionButton(
+                  heroTag: 'back_btn',
                   onPressed: () => controller.undo(),
                   backgroundColor: Colors.grey,
                   child: const Icon(Icons.undo),
                 ),
                 FloatingActionButton(
+                  heroTag: 'like_btn',
                   onPressed: () => controller.swipe(CardSwiperDirection.right),
                   backgroundColor: Colors.green,
                   child: const Icon(Icons.favorite),
