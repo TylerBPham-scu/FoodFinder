@@ -12,7 +12,7 @@ class LocationScreen extends StatefulWidget {
 }
 
 class _LocationScreenState extends State<LocationScreen> {
-  String _locationMessage = "Press button to get location";
+  String _locationMessage = "Select preferences start your search";
 
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
@@ -95,7 +95,7 @@ class _LocationScreenState extends State<LocationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Location'),
+        title: const Text('Start Search near you'),
       ),
       body: Center(
         child: Padding(
@@ -107,7 +107,7 @@ class _LocationScreenState extends State<LocationScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _getCurrentLocation,
-                child: const Text('Get Current Location'),
+                child: const Text('Searching'),
               ),
             ],
           ),

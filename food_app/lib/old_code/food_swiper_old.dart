@@ -1,8 +1,7 @@
-// food_card_swiper_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
-import 'food_card.dart';
-import 'food_detail_screen.dart';
+import 'package:food_app/food_cards/food_card.dart'; // FoodItem and FoodCard definition
+import 'package:food_app/food_cards/food_detail_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -12,10 +11,10 @@ class FoodCardSwiperScreen extends StatefulWidget {
   const FoodCardSwiperScreen({super.key, required this.username});
 
   @override
-  FoodCardSwiperScreenState createState() => FoodCardSwiperScreenState();
+  State<FoodCardSwiperScreen> createState() => _FoodCardSwiperScreenState();
 }
 
-class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
+class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
   final CardSwiperController controller = CardSwiperController();
   List<FoodItem> foodItems = [];
   bool isLoading = true;
@@ -29,10 +28,6 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
   }
 
   Future<void> fetchFoodItems() async {
-    setState(() {
-      isLoading = true;
-    });
-
     final url = Uri.parse('http://127.0.0.1:5000/cards?username=${widget.username}');
     try {
       final response = await http.get(url);
@@ -41,19 +36,21 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
         setState(() {
           foodItems = data.map((e) => FoodItem.fromJson(e)).toList();
           isLoading = false;
-          allCardsSwiped = false;
+          allCardsSwiped = false;  // reset swiped flag when loading new data
         });
       } else {
         setState(() {
           foodItems = [];
           isLoading = false;
+          allCardsSwiped = false;
         });
       }
     } catch (e) {
-      print('Error: $e');
+      print('Fetch error: $e');
       setState(() {
         foodItems = [];
         isLoading = false;
+        allCardsSwiped = false;
       });
     }
   }
@@ -71,6 +68,7 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
               ? CardSwiper(
                   controller: controller,
                   cardsCount: foodItems.length,
+
                   onSwipe: (index, _, dir) {
                     final item = foodItems[index];
                     final direction = dir == CardSwiperDirection.right ? "right" : "left";
@@ -86,6 +84,7 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                         'timestamp': timestamp,
                       }),
                     );
+
                     return true;
                   },
                   onEnd: () => setState(() => allCardsSwiped = true),
@@ -102,7 +101,31 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                     );
                   },
                 )
-              : const Center(child: Text('No restaurants found')),
+              : Center(
+                  child: allCardsSwiped
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('All cards swiped!'),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () async {
+                                setState(() {
+                                  isLoading = true;
+                                  allCardsSwiped = false;
+                                });
+                                await fetchFoodItems();
+                              },
+                              child: const Text('Reload Cards'),
+                            ),
+                          ],
+                        )
+                      : const Text(
+                          'There are no restaurants near you.',
+                          style: TextStyle(fontSize: 18),
+                          textAlign: TextAlign.center,
+                        ),
+                ),
         ),
         if (foodItems.isNotEmpty && !allCardsSwiped)
           Padding(
@@ -110,9 +133,24 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                FloatingActionButton(heroTag: 'dislike', onPressed: () => controller.swipe(CardSwiperDirection.left), backgroundColor: Colors.red, child: const Icon(Icons.close)),
-                FloatingActionButton(heroTag: 'undo', onPressed: () => controller.undo(), backgroundColor: Colors.grey, child: const Icon(Icons.undo)),
-                FloatingActionButton(heroTag: 'like', onPressed: () => controller.swipe(CardSwiperDirection.right), backgroundColor: Colors.green, child: const Icon(Icons.favorite)),
+                FloatingActionButton(
+                  heroTag: 'dislike_btn', 
+                  onPressed: () => controller.swipe(CardSwiperDirection.left),
+                  backgroundColor: Colors.red,
+                  child: const Icon(Icons.close),
+                ),
+                FloatingActionButton(
+                  heroTag: 'back_btn',
+                  onPressed: () => controller.undo(),
+                  backgroundColor: Colors.grey,
+                  child: const Icon(Icons.undo),
+                ),
+                FloatingActionButton(
+                  heroTag: 'like_btn',
+                  onPressed: () => controller.swipe(CardSwiperDirection.right),
+                  backgroundColor: Colors.green,
+                  child: const Icon(Icons.favorite),
+                ),
               ],
             ),
           ),
