@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:food_app/User_files/login.dart';
 import 'food_cards/food_swiper.dart';
 import 'Upload/image_picker.dart';
-import 'User_files/location.dart';
+//import 'User_files/location.dart';
 import 'User_files/liked_screen.dart';
+import 'User_files/interest.dart';
 
 void main() {
   runApp(const MyApp());

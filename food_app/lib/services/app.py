@@ -16,6 +16,7 @@ def home():
     return "Flask backend is running!"
 
 # change this for the ml logic as we want to change get restuants to ml logic
+"""
 @app.route('/cards', methods=['GET'])
 def get_cards():
     try:
@@ -24,6 +25,59 @@ def get_cards():
     except Exception as e:
         print(f"Error fetching cards: {e}")
         return jsonify({"error": "Failed to fetch cards"}), 500
+"""
+@app.route('/cards', methods=['GET'])
+def get_cards():
+    try:
+        username = request.args.get('username')  # Get 'username' from query params
+        print(username)
+        # For example, fetch all restaurants from your database or data source
+        restaurant_json = fs.get_restaurants()
+
+        # Default empty preferences if user not found or no username provided
+        preferences = []
+        print(preferences)
+        if username:
+            print("worked")
+            users_ref = fs.db.collection('users')
+            query = users_ref.where('username', '==', username).limit(1).stream()
+
+            user_doc = next(query, None)
+            if user_doc:
+                user_data = user_doc.to_dict()
+                preferences = user_data.get('preferences', [])
+                preferences = [pref.lower() for pref in preferences if isinstance(pref, str)]
+
+        if preferences:
+            print("testing 2")
+            print(preferences)
+            filtered_restaurants = []
+            for r in restaurant_json:
+                cuisines = r.get('cuisines', [])
+                if not isinstance(cuisines, list):
+                    cuisines = []
+
+                cuisines_lower = [c.lower() for c in cuisines if isinstance(c, str)]
+
+                if any(pref == c for pref in preferences for c in cuisines_lower):
+                    filtered_restaurants.append(r)
+
+            print(filtered_restaurants)
+            return jsonify(filtered_restaurants), 200
+
+        # If no preferences or no username, return all restaurants
+        return jsonify(restaurant_json), 200
+
+    except Exception as e:
+        print(f"Error fetching cards: {e}")
+        return jsonify({"error": "Failed to fetch cards"}), 500
+
+    except Exception as e:
+        print(f"Error fetching cards: {e}")
+        return jsonify({"error": "Failed to fetch cards"}), 500
+
+
+
 """
 @app.route('/swipe', methods=['POST'])
 def swipe():
@@ -131,9 +185,7 @@ def register():
     except Exception as e:
         print(f"Register error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
-
-
-
+    
 
 @app.route('/update_location', methods=['POST'])
 def update_location():
@@ -141,6 +193,7 @@ def update_location():
     username = data.get('username')
     latitude = data.get('latitude')
     longitude = data.get('longitude')
+    cuisine_preferences = data.get('preferences', [])  # updated key to 'preferences'
 
     if not username or latitude is None or longitude is None:
         return jsonify({'error': 'Missing username or location data'}), 400
@@ -149,28 +202,27 @@ def update_location():
         users_ref = fs.db.collection('users')
         query = users_ref.where('username', '==', username).limit(1).stream()
 
-        user_doc = None
-        for doc in query:
-            user_doc = doc
-            break
-
+        user_doc = next(query, None)
         if user_doc is None:
             return jsonify({'error': 'User not found'}), 404
 
-        # Update user document with location
         user_ref = users_ref.document(user_doc.id)
+        # Update location AND preferences
         user_ref.update({
             'location': {
                 'latitude': latitude,
                 'longitude': longitude,
-            }
+            },
+            'preferences': cuisine_preferences  # store preferences here
         })
 
-        return jsonify({'status': 'Location updated'}), 200
+        return jsonify({'status': 'Location and preferences updated'}), 200
 
     except Exception as e:
         print(f"Error updating location: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+
 
 """
 @app.route('/liked_restaurants', methods=['POST'])

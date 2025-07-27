@@ -19,8 +19,7 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
   List<FoodItem> foodItems = [];
   bool isLoading = true;
   bool allCardsSwiped = false;
-  final timestamp = DateTime.now().toIso8601String();  // Current time in ISO 8601 format
-
+  final String timestamp = DateTime.now().toIso8601String();
 
   @override
   void initState() {
@@ -29,9 +28,7 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
   }
 
   Future<void> fetchFoodItems() async {
-    final url = Uri.parse(
-      'http://127.0.0.1:5000/cards',
-    ); // Use LAN IP if on real device
+    final url = Uri.parse('http://127.0.0.1:5000/cards?username=${widget.username}');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -39,11 +36,13 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
         setState(() {
           foodItems = data.map((e) => FoodItem.fromJson(e)).toList();
           isLoading = false;
+          allCardsSwiped = false;  // reset swiped flag when loading new data
         });
       } else {
         setState(() {
           foodItems = [];
           isLoading = false;
+          allCardsSwiped = false;
         });
       }
     } catch (e) {
@@ -51,6 +50,7 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
       setState(() {
         foodItems = [];
         isLoading = false;
+        allCardsSwiped = false;
       });
     }
   }
@@ -61,49 +61,17 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Show message if no cards available at all
-    if (foodItems.isEmpty) {
-      return Center(
-        child: Text(
-          'There are no restaurants near you.',
-          style: const TextStyle(fontSize: 18),
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-
     return Column(
       children: [
         Expanded(
-          child: allCardsSwiped
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('All cards swiped!'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () async {
-                          setState(() {
-                            isLoading = true;
-                            allCardsSwiped = false;
-                          });
-                          await fetchFoodItems();
-                        },
-                        child: const Text('Reload Cards'),
-                      ),
-                    ],
-                  ),
-                )
-              : CardSwiper(
+          child: (foodItems.isNotEmpty && !allCardsSwiped)
+              ? CardSwiper(
                   controller: controller,
                   cardsCount: foodItems.length,
-                  isLoop: true, // Enable looping here
+
                   onSwipe: (index, _, dir) {
                     final item = foodItems[index];
-                    final direction = dir == CardSwiperDirection.right
-                        ? "right"
-                        : "left";
+                    final direction = dir == CardSwiperDirection.right ? "right" : "left";
 
                     http.post(
                       Uri.parse('http://127.0.0.1:5000/swipe'),
@@ -113,8 +81,7 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                         'direction': direction,
                         'name': item.name,
                         'user': widget.username,
-                        'timestamp': timestamp,  // <-- add timestamp here
-
+                        'timestamp': timestamp,
                       }),
                     );
 
@@ -133,9 +100,34 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                       ),
                     );
                   },
+                )
+              : Center(
+                  child: allCardsSwiped
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('All cards swiped!'),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () async {
+                                setState(() {
+                                  isLoading = true;
+                                  allCardsSwiped = false;
+                                });
+                                await fetchFoodItems();
+                              },
+                              child: const Text('Reload Cards'),
+                            ),
+                          ],
+                        )
+                      : const Text(
+                          'There are no restaurants near you.',
+                          style: TextStyle(fontSize: 18),
+                          textAlign: TextAlign.center,
+                        ),
                 ),
         ),
-        if (!allCardsSwiped)
+        if (foodItems.isNotEmpty && !allCardsSwiped)
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Row(
