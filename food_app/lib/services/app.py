@@ -223,47 +223,6 @@ def update_location():
         return jsonify({'error': 'Internal server error'}), 500
 
 
-
-"""
-@app.route('/liked_restaurants', methods=['POST'])
-def liked_restaurants():
-    data = request.get_json()
-    username = data.get('username')
-
-    if not username:
-        return jsonify({'error': 'Username is required'}), 400
-
-    try:
-        users_ref = fs.db.collection('users')
-        query = users_ref.where('username', '==', username).limit(1).stream()
-
-        user_doc = None
-        for doc in query:
-            user_doc = doc
-            break
-
-        if user_doc is None:
-            return jsonify({'error': 'User not found'}), 404
-
-        user_data = user_doc.to_dict()
-        liked_names = user_data.get('liked', [])
-
-        if not liked_names:
-            return jsonify([]), 200
-
-        matched_restaurants = []
-
-        for name in liked_names:
-            restaurants_ref = fs.db.collection('restaurants')
-            query = restaurants_ref.where('name', '==', name).stream()
-            for rest_doc in query:
-                matched_restaurants.append(rest_doc.to_dict())
-
-        return jsonify(matched_restaurants), 200
-
-    except Exception as e:
-        print(f"Error fetching liked restaurants: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
 """
 @app.route('/liked_restaurants', methods=['POST'])
 def liked_restaurants():
@@ -289,6 +248,58 @@ def liked_restaurants():
         liked_names = user_data.get('liked', [])
         
         # Defensive: likedTimestamps may be list or dict
+        liked_timestamps_raw = user_data.get('likedTimestamps', {})
+        if isinstance(liked_timestamps_raw, list):
+            liked_timestamps = {}
+            for item in liked_timestamps_raw:
+                if isinstance(item, dict):
+                    liked_timestamps.update(item)
+        else:
+            liked_timestamps = liked_timestamps_raw
+
+        if not liked_names:
+            return jsonify([]), 200
+
+        matched_restaurants = []
+        restaurants_ref = fs.db.collection('restaurants')
+
+        for i in range(0, len(liked_names), 10):
+            chunk = liked_names[i:i+10]
+            query = restaurants_ref.where('name', 'in', chunk).stream()
+            for rest_doc in query:
+                rest_data = rest_doc.to_dict()
+                name = rest_data.get('name')
+                rest_data['likedTimestamp'] = liked_timestamps.get(name)
+                matched_restaurants.append(rest_data)
+
+        return jsonify(matched_restaurants), 200
+
+    except Exception as e:
+        print(f"Error fetching liked restaurants: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+"""
+@app.route('/liked_restaurants', methods=['GET', 'POST'])
+def liked_restaurants():
+    if request.method == 'GET':
+        username = request.args.get('username')
+    else:
+        data = request.get_json()
+        username = data.get('username')
+
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+
+    try:
+        users_ref = fs.db.collection('users')
+        query = users_ref.where('username', '==', username).limit(1).stream()
+        user_doc = next(query, None)
+
+        if user_doc is None:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_data = user_doc.to_dict()
+        liked_names = user_data.get('liked', [])
+        
         liked_timestamps_raw = user_data.get('likedTimestamps', {})
         if isinstance(liked_timestamps_raw, list):
             liked_timestamps = {}
