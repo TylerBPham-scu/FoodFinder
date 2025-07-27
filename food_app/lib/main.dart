@@ -5,10 +5,11 @@ import 'Upload/image_picker.dart';
 //import 'User_files/location.dart';
 import 'User_files/liked_screen.dart';
 import 'User_files/interest.dart';
-
+import 'User_files/user_info.dart';
 void main() {
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -23,7 +24,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// MainScreen with BottomNavigationBar
 class MainScreen extends StatefulWidget {
   final String username;
   const MainScreen({super.key, required this.username});
@@ -35,18 +35,17 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
-    // Pass username to pages that need it
     _pages = <Widget>[
       FoodCardSwiperScreen(username: widget.username),
       ImagePickerScreen(),
-      LocationScreen(username: widget.username),
-      LikedRestaurantsScreen(username: widget.username), // <-- Added here
-      // Add more pages here if needed
+      LikedRestaurantsScreen(username: widget.username),
     ];
   }
 
@@ -56,22 +55,67 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void _navigateToLocationScreen() {
+    Navigator.pop(context); // close drawer
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocationScreen(username: widget.username),
+      ),
+    );
+  }
+
+  void _navigateToProfileScreen() {
+    Navigator.pop(context); // close drawer
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserProfileScreen(username: widget.username),
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Welcome, ${widget.username}!')),
+      key: _scaffoldKey,
+      appBar: AppBar(
+        title: Text('Welcome, ${widget.username}!'),
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => _scaffoldKey.currentState!.openDrawer(),
+        ),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.location_on),
+              title: const Text('Location'),
+              onTap: _navigateToLocationScreen,
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Profile'),
+              onTap: _navigateToProfileScreen,
+            ),
+          ],
+        ),
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Add this line
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.fastfood), label: 'Swiper'),
           BottomNavigationBarItem(icon: Icon(Icons.image), label: 'Upload'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.location_on),
-            label: 'Location',
-          ),
           BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Liked'),
         ],
       ),
