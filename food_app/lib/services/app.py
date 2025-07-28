@@ -514,13 +514,13 @@ def reject_friend_request():
         from_data = from_doc.to_dict()
 
         # Remove the request
-        incoming = set(user_data.get('incomingRequests', []))
+        incoming = set(user_data.get('friend_requests_received', []))
         incoming.discard(from_user)
-        sent = set(from_data.get('sentRequests', []))
+        sent = set(from_data.get('friend_requests_sent', []))
         sent.discard(username)
 
-        user_ref.update({'incomingRequests': list(incoming)})
-        from_ref.update({'sentRequests': list(sent)})
+        user_ref.update({'friend_requests_received': list(incoming)})
+        from_ref.update({'friend_requests_sent': list(sent)})
 
         return jsonify({'message': 'Friend request rejected'}), 200
 
