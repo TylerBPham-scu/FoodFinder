@@ -390,6 +390,8 @@ def send_friend_request():
     except Exception as e:
         print(f"Send friend request error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+    
+
 @app.route('/get_friend_requests', methods=['GET'])
 def get_friend_requests():
     username = request.args.get('username')
@@ -487,6 +489,49 @@ def accept_friend_request():
         return jsonify({'error': 'Internal server error'}), 500
 
 
+
+@app.route('/reject_friend_request', methods=['POST'])
+def reject_friend_request():
+    data = request.get_json()
+    username = data.get('username')
+    from_user = data.get('from_user')
+
+    if not username or not from_user:
+        return jsonify({'error': 'Missing usernames'}), 400
+
+    try:
+        users_ref = fs.db.collection('users')
+        user_doc = next(users_ref.where('username', '==', username).limit(1).stream(), None)
+        from_doc = next(users_ref.where('username', '==', from_user).limit(1).stream(), None)
+
+        if user_doc is None or from_doc is None:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_ref = users_ref.document(user_doc.id)
+        from_ref = users_ref.document(from_doc.id)
+
+        user_data = user_doc.to_dict()
+        from_data = from_doc.to_dict()
+
+        # Remove the request
+        incoming = set(user_data.get('incomingRequests', []))
+        incoming.discard(from_user)
+        sent = set(from_data.get('sentRequests', []))
+        sent.discard(username)
+
+        user_ref.update({'incomingRequests': list(incoming)})
+        from_ref.update({'sentRequests': list(sent)})
+
+        return jsonify({'message': 'Friend request rejected'}), 200
+
+    except Exception as e:
+        print(f"Reject friend request error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+
+
+
 @app.route('/remove_friend', methods=['POST'])
 def remove_friend():
     data = request.get_json()
@@ -498,27 +543,39 @@ def remove_friend():
 
     try:
         users_ref = fs.db.collection('users')
-        user_doc = next(users_ref.where('username', '==', username).limit(1).stream(), None)
 
-        if user_doc is None:
+        # Get user documents
+        user_doc = next(users_ref.where('username', '==', username).limit(1).stream(), None)
+        friend_doc = next(users_ref.where('username', '==', friend_username).limit(1).stream(), None)
+
+        if user_doc is None or friend_doc is None:
             return jsonify({'error': 'User not found'}), 404
 
         user_ref = users_ref.document(user_doc.id)
+        friend_ref = users_ref.document(friend_doc.id)
+
         user_data = user_doc.to_dict()
+        friend_data = friend_doc.to_dict()
 
-        friends = user_data.get('friends', {})
+        # Update both users' friends lists
+        user_friends = user_data.get('friends', {})
+        friend_friends = friend_data.get('friends', {})
 
-        if friend_username not in friends:
+        if friend_username not in user_friends:
             return jsonify({'error': 'Friend not in list'}), 400
 
-        del friends[friend_username]
-        user_ref.update({'friends': friends})
+        user_friends.pop(friend_username, None)
+        friend_friends.pop(username, None)
 
-        return jsonify({'message': f'{friend_username} removed from friends'}), 200
+        user_ref.update({'friends': user_friends})
+        friend_ref.update({'friends': friend_friends})
+
+        return jsonify({'message': f'{friend_username} removed from friends for both users'}), 200
 
     except Exception as e:
         print(f"Error removing friend: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
 
 
 
