@@ -115,31 +115,6 @@ def get_cards():
         return jsonify({"error": "Failed to fetch cards"}), 500
 
 
-
-"""
-@app.route('/swipe', methods=['POST'])
-def swipe():
-    data = request.get_json()
-    if not data or 'direction' not in data:
-        return jsonify({'error': 'Invalid swipe data'}), 400
-
-    direction = data['direction']
-    name = data.get('name', 'unknown')
-    user = data.get('user', 'anonymous')
-
-    print(f"User '{user}' swiped {direction} on '{name}'")
-
-    if direction.lower() == 'right':
-        try:
-            success = fs.add_liked_restaurant(user, name)
-            if not success:
-                return jsonify({'error': 'User not found'}), 404
-        except Exception as e:
-            print(f"Error updating liked restaurants: {e}")
-            return jsonify({'error': 'Failed to update liked restaurants'}), 500
-
-    return jsonify({"status": "received"}), 200
-"""
 @app.route('/swipe', methods=['POST'])
 def swipe():
     data = request.get_json()
@@ -195,7 +170,6 @@ def login():
         print(f"Login error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
-
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -207,24 +181,34 @@ def register():
 
     try:
         users_ref = fs.db.collection('users')
-        # Old style where() without FieldFilter
+
+        # Check if user already exists
         query = users_ref.where('username', '==', username).limit(1).stream()
         if any(query):
             return jsonify({'error': 'User already exists'}), 400
 
-        # Add new user
+        # Add new user with expanded friend structure
         new_user = {
             'username': username,
             'password': password,
             'liked': [],
-            'avatarUrl': ''
+            'likedTimestamps': {},
+            'avatarUrl': '',
+            'friends': {},
+            'friend_requests_sent': [],
+            'friend_requests_received': [],
+            'session_id':{},
+            'phone':'',
+            'email':'',
         }
+
         users_ref.add(new_user)
         return jsonify({'message': 'User registered successfully'}), 201
+
     except Exception as e:
         print(f"Register error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
-    
+
 
 @app.route('/update_location', methods=['POST'])
 def update_location():
@@ -262,61 +246,6 @@ def update_location():
         return jsonify({'error': 'Internal server error'}), 500
 
 
-"""
-@app.route('/liked_restaurants', methods=['POST'])
-def liked_restaurants():
-    data = request.get_json()
-    username = data.get('username')
-
-    if not username:
-        return jsonify({'error': 'Username is required'}), 400
-
-    try:
-        users_ref = fs.db.collection('users')
-        query = users_ref.where('username', '==', username).limit(1).stream()
-
-        user_doc = None
-        for doc in query:
-            user_doc = doc
-            break
-
-        if user_doc is None:
-            return jsonify({'error': 'User not found'}), 404
-
-        user_data = user_doc.to_dict()
-        liked_names = user_data.get('liked', [])
-        
-        # Defensive: likedTimestamps may be list or dict
-        liked_timestamps_raw = user_data.get('likedTimestamps', {})
-        if isinstance(liked_timestamps_raw, list):
-            liked_timestamps = {}
-            for item in liked_timestamps_raw:
-                if isinstance(item, dict):
-                    liked_timestamps.update(item)
-        else:
-            liked_timestamps = liked_timestamps_raw
-
-        if not liked_names:
-            return jsonify([]), 200
-
-        matched_restaurants = []
-        restaurants_ref = fs.db.collection('restaurants')
-
-        for i in range(0, len(liked_names), 10):
-            chunk = liked_names[i:i+10]
-            query = restaurants_ref.where('name', 'in', chunk).stream()
-            for rest_doc in query:
-                rest_data = rest_doc.to_dict()
-                name = rest_data.get('name')
-                rest_data['likedTimestamp'] = liked_timestamps.get(name)
-                matched_restaurants.append(rest_data)
-
-        return jsonify(matched_restaurants), 200
-
-    except Exception as e:
-        print(f"Error fetching liked restaurants: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
-"""
 @app.route('/liked_restaurants', methods=['GET', 'POST'])
 def liked_restaurants():
     if request.method == 'GET':
@@ -415,6 +344,181 @@ def remove_liked_restaurant():
     except Exception as e:
         print(f"Error removing liked restaurant: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/send_friend_request', methods=['POST'])
+def send_friend_request():
+    data = request.get_json()
+    print("Request data:", data)  # <-- Add this to debug
+
+    username = data.get('username')
+    target_username = data.get('target_username')
+    
+    if not username or not target_username:
+        print("what")
+        return jsonify({'error': 'Missing usernames'}), 400
+
+    try:
+        users_ref = fs.db.collection('users')
+        user_doc = next(users_ref.where('username', '==', username).limit(1).stream(), None)
+        target_doc = next(users_ref.where('username', '==', target_username).limit(1).stream(), None)
+
+        if user_doc is None or target_doc is None:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_ref = users_ref.document(user_doc.id)
+        target_ref = users_ref.document(target_doc.id)
+
+        user_data = user_doc.to_dict()
+        target_data = target_doc.to_dict()
+
+        sent = set(user_data.get('friend_requests_sent', []))
+        received = set(target_data.get('friend_requests_received', []))
+
+        # Already sent or already friends
+        if target_username in sent or username in target_data.get('friends', {}):
+            return jsonify({'message': 'Already sent or already friends'}), 200
+
+        sent.add(target_username)
+        received.add(username)
+
+        user_ref.update({'friend_requests_sent': list(sent)})
+        target_ref.update({'friend_requests_received': list(received)})
+
+        return jsonify({'message': 'Friend request sent'}), 200
+
+    except Exception as e:
+        print(f"Send friend request error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+@app.route('/get_friend_requests', methods=['GET'])
+def get_friend_requests():
+    username = request.args.get('username')
+    if not username:
+        print("error: no username")
+        return jsonify({'error': 'Username required'}), 400
+
+    try:
+        users_ref = fs.db.collection('users')
+        user_doc = next(users_ref.where('username', '==', username).limit(1).stream(), None)
+
+        if user_doc is None:
+            print("error: no doc")
+            return jsonify({'error': 'User not found'}), 404
+
+        user_data = user_doc.to_dict()
+        return jsonify({
+            'incomingRequests': user_data.get('friend_requests_received', []),
+            'sentRequests': user_data.get('friend_requests_sent', [])
+        }), 200
+
+    except Exception as e:
+        print(f"Get friend requests error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/get_friends', methods=['GET'])
+def get_friends():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+
+    try:
+        users_ref = fs.db.collection('users')
+        user_doc = next(users_ref.where('username', '==', username).limit(1).stream(), None)
+        if user_doc is None:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_data = user_doc.to_dict()
+        friends = user_data.get('friends', {})
+        return jsonify(friends), 200
+
+    except Exception as e:
+        print(f"Get friends error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/accept_friend_request', methods=['POST'])
+def accept_friend_request():
+    data = request.get_json()
+    username = data.get('username')
+    from_user = data.get('from_user')
+
+    if not username or not from_user:
+        return jsonify({'error': 'Missing usernames'}), 400
+
+    try:
+        users_ref = fs.db.collection('users')
+        user_doc = next(users_ref.where('username', '==', username).limit(1).stream(), None)
+        from_doc = next(users_ref.where('username', '==', from_user).limit(1).stream(), None)
+
+        if user_doc is None or from_doc is None:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_ref = users_ref.document(user_doc.id)
+        from_ref = users_ref.document(from_doc.id)
+
+        user_data = user_doc.to_dict()
+        from_data = from_doc.to_dict()
+
+        # Remove from requests
+        incoming = set(user_data.get('friend_requests_received', []))
+        incoming.discard(from_user)
+        sent = set(from_data.get('friend_requests_sent', []))
+        sent.discard(username)
+
+        # Add to friends
+        user_friends = user_data.get('friends', {})
+        from_friends = from_data.get('friends', {})
+        user_friends[from_user] = True
+        from_friends[username] = True
+
+        user_ref.update({
+            'friend_requests_received': list(incoming),
+            'friends': user_friends
+        })
+
+        from_ref.update({
+            'friend_requests_sent': list(sent),
+            'friends': from_friends
+        })
+
+        return jsonify({'message': 'Friend request accepted'}), 200
+
+    except Exception as e:
+        print(f"Accept friend error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@app.route('/remove_friend', methods=['POST'])
+def remove_friend():
+    data = request.get_json()
+    username = data.get('username')
+    friend_username = data.get('friend_username')
+
+    if not username or not friend_username:
+        return jsonify({'error': 'Missing username or friend_username'}), 400
+
+    try:
+        users_ref = fs.db.collection('users')
+        user_doc = next(users_ref.where('username', '==', username).limit(1).stream(), None)
+
+        if user_doc is None:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_ref = users_ref.document(user_doc.id)
+        user_data = user_doc.to_dict()
+
+        friends = user_data.get('friends', {})
+
+        if friend_username not in friends:
+            return jsonify({'error': 'Friend not in list'}), 400
+
+        del friends[friend_username]
+        user_ref.update({'friends': friends})
+
+        return jsonify({'message': f'{friend_username} removed from friends'}), 200
+
+    except Exception as e:
+        print(f"Error removing friend: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 
 
 
