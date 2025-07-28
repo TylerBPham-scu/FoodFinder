@@ -5,6 +5,7 @@ import 'Upload/image_picker.dart';
 import 'User_files/liked_screen_refactored.dart';
 import 'User_files/interest_refactored.dart';
 import 'User_files/user_info_refactored.dart';
+import 'friends/friends.dart'; // Adjust path if needed
 
 void main() {
   runApp(const MyApp());
@@ -77,6 +78,17 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  void _navigateToFriendPage() {
+    if (Navigator.canPop(context)) Navigator.pop(context);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FriendPage(username: widget.username),
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,6 +118,12 @@ class _MainScreenState extends State<MainScreen> {
               title: const Text('Profile'),
               onTap: _navigateToProfileScreen,
             ),
+          ListTile(
+            leading: const Icon(Icons.group),
+            title: const Text('Friends'),
+            onTap: _navigateToFriendPage,
+          ),
+
           ],
         ),
       ),
