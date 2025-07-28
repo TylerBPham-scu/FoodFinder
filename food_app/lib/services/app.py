@@ -376,6 +376,7 @@ def send_friend_request():
 
         # Already sent or already friends
         if target_username in sent or username in target_data.get('friends', {}):
+            print("hey ho")
             return jsonify({'message': 'Already sent or already friends'}), 200
 
         sent.add(target_username)
