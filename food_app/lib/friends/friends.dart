@@ -26,12 +26,9 @@ class _FriendPageState extends State<FriendPage> {
   Future<void> fetchFriendsAndRequests() async {
     setState(() => isLoading = true);
     try {
-      // Get friends
       final friendsRes = await http.get(
         Uri.parse('http://127.0.0.1:5000/get_friends?username=${widget.username}'),
       );
-
-      // Get friend requests
       final requestsRes = await http.get(
         Uri.parse('http://127.0.0.1:5000/get_friend_requests?username=${widget.username}'),
       );
@@ -62,7 +59,7 @@ class _FriendPageState extends State<FriendPage> {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': widget.username,
-        'target_username': friendUsername, // FIXED KEY
+        'target_username': friendUsername,
       }),
     );
 
@@ -80,12 +77,30 @@ class _FriendPageState extends State<FriendPage> {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': widget.username,
-        'from_user': fromUsername, // FIXED KEY
+        'from_user': fromUsername,
       }),
     );
 
     if (response.statusCode == 200) {
       _showSnackBar("Friend request accepted");
+      fetchFriendsAndRequests();
+    } else {
+      _showSnackBar("Error: ${response.body}");
+    }
+  }
+
+  Future<void> rejectFriend(String fromUsername) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/reject_friend_request'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': widget.username,
+        'from_user': fromUsername,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      _showSnackBar("Friend request rejected");
       fetchFriendsAndRequests();
     } else {
       _showSnackBar("Error: ${response.body}");
@@ -151,9 +166,20 @@ class _FriendPageState extends State<FriendPage> {
                         ...incomingRequests.map((username) {
                           return ListTile(
                             title: Text(username),
-                            trailing: ElevatedButton(
-                              onPressed: () => acceptFriend(username),
-                              child: const Text('Accept'),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () => acceptFriend(username),
+                                  child: const Text('Accept'),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed: () => rejectFriend(username),
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                  child: const Text('Reject'),
+                                ),
+                              ],
                             ),
                           );
                         }),
