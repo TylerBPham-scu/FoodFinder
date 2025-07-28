@@ -4,6 +4,8 @@ from flask_cors import CORS
 from Firestore_services import FirestoreClient
 import json
 import tempfile
+import numpy as np
+
 
 app = Flask(__name__)
 CORS(app)
@@ -85,6 +87,8 @@ def get_cards():
                 user_data = user_doc.to_dict()
                 preferences = user_data.get('preferences', [])
                 preferences = [pref.lower() for pref in preferences if isinstance(pref, str)]
+                session= user_doc.get('session_id')
+                print(session)
 
         if preferences:
             print("testing 2")
@@ -143,7 +147,7 @@ def swipe():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    print("Received login data:", data)  # << Add this line
+    print("Received login data:", data)
 
     username = data.get('username')
     password = data.get('password')
@@ -154,21 +158,29 @@ def login():
     try:
         users_ref = fs.db.collection('users')
         query = users_ref.where('username', '==', username).limit(1).stream()
+        user_doc = next(query, None)
 
-        for doc in query:
-            user = doc.to_dict()
-            if user.get('password') == password:
-                # Success: return user data expected by Flutter
-                return jsonify({
-                    'id': doc.id,
-                    'name': user['username'],
-                    'avatarUrl': user.get('avatarUrl', '')  # Optional
-                }), 200
+        if user_doc is None:
+            return jsonify({'error': 'Invalid username or password'}), 401
 
-        return jsonify({'error': 'Invalid username or password'}), 401
+        user = user_doc.to_dict()
+
+        if user.get('password') != password:
+            return jsonify({'error': 'Invalid username or password'}), 401
+
+        # ✅ Set session_id to empty string for this user
+        users_ref.document(user_doc.id).update({'session_id': ''})
+
+        return jsonify({
+            'id': user_doc.id,
+            'name': user['username'],
+            'avatarUrl': user.get('avatarUrl', '')
+        }), 200
+
     except Exception as e:
         print(f"Login error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -197,7 +209,7 @@ def register():
             'friends': {},
             'friend_requests_sent': [],
             'friend_requests_received': [],
-            'session_id':{},
+            'session_id':'',
             'phone':'',
             'email':'',
         }
