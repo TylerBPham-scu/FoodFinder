@@ -1,8 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
-import 'package:food_app/food_cards/food_card_refactored.dart'; // FoodItem and FoodCard definition
-import 'package:food_app/food_cards/food_detail_screen.dart';
-import 'dart:convert';
+import 'food_card_refactored.dart';
+import 'food_detail_screen_refactored.dart';
 import 'package:http/http.dart' as http;
 
 class FoodCardSwiperScreen extends StatefulWidget {
@@ -11,10 +11,10 @@ class FoodCardSwiperScreen extends StatefulWidget {
   const FoodCardSwiperScreen({super.key, required this.username});
 
   @override
-  State<FoodCardSwiperScreen> createState() => _FoodCardSwiperScreenState();
+  FoodCardSwiperScreenState createState() => FoodCardSwiperScreenState();
 }
 
-class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
+class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
   final CardSwiperController controller = CardSwiperController();
   List<FoodItem> foodItems = [];
   bool isLoading = true;
@@ -28,6 +28,10 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
   }
 
   Future<void> fetchFoodItems() async {
+    setState(() {
+      isLoading = true;
+    });
+
     final url = Uri.parse('http://127.0.0.1:5000/cards?username=${widget.username}');
     try {
       final response = await http.get(url);
@@ -36,27 +40,35 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
         setState(() {
           foodItems = data.map((e) => FoodItem.fromJson(e)).toList();
           isLoading = false;
-          allCardsSwiped = false;  // reset swiped flag when loading new data
+          allCardsSwiped = false;
         });
       } else {
         setState(() {
           foodItems = [];
           isLoading = false;
-          allCardsSwiped = false;
         });
       }
     } catch (e) {
-      print('Fetch error: $e');
+      print('Error: $e');
       setState(() {
         foodItems = [];
         isLoading = false;
-        allCardsSwiped = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    print(screenWidth);
+    print(screenHeight);
+    final bool isTabletOrLarger = screenWidth > 700;
+
+    final buttonSize = isTabletOrLarger ? 50.0 : 30.0;
+    final cardHeight = isTabletOrLarger ? screenHeight * 0.5 : screenHeight * 0.4;
+    final padding = screenWidth < 600 ? 8.0 : 16.0;
+
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -68,7 +80,6 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
               ? CardSwiper(
                   controller: controller,
                   cardsCount: foodItems.length,
-
                   onSwipe: (index, _, dir) {
                     final item = foodItems[index];
                     final direction = dir == CardSwiperDirection.right ? "right" : "left";
@@ -84,7 +95,6 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                         'timestamp': timestamp,
                       }),
                     );
-
                     return true;
                   },
                   onEnd: () => setState(() => allCardsSwiped = true),
@@ -92,6 +102,7 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                     final item = foodItems[index];
                     return FoodCard(
                       foodItem: item,
+                      height: cardHeight,
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -101,55 +112,31 @@ class _FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
                     );
                   },
                 )
-              : Center(
-                  child: allCardsSwiped
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text('All cards swiped!'),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () async {
-                                setState(() {
-                                  isLoading = true;
-                                  allCardsSwiped = false;
-                                });
-                                await fetchFoodItems();
-                              },
-                              child: const Text('Reload Cards'),
-                            ),
-                          ],
-                        )
-                      : const Text(
-                          'There are no restaurants near you.',
-                          style: TextStyle(fontSize: 18),
-                          textAlign: TextAlign.center,
-                        ),
-                ),
+              : const Center(child: Text('No restaurants found')),
         ),
         if (foodItems.isNotEmpty && !allCardsSwiped)
           Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: EdgeInsets.symmetric(horizontal: padding),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 FloatingActionButton(
-                  heroTag: 'dislike_btn', 
+                  heroTag: 'dislike',
                   onPressed: () => controller.swipe(CardSwiperDirection.left),
                   backgroundColor: Colors.red,
-                  child: const Icon(Icons.close),
+                  child: Icon(Icons.close, size: buttonSize),
                 ),
                 FloatingActionButton(
-                  heroTag: 'back_btn',
+                  heroTag: 'undo',
                   onPressed: () => controller.undo(),
                   backgroundColor: Colors.grey,
-                  child: const Icon(Icons.undo),
+                  child: Icon(Icons.undo, size: buttonSize),
                 ),
                 FloatingActionButton(
-                  heroTag: 'like_btn',
+                  heroTag: 'like',
                   onPressed: () => controller.swipe(CardSwiperDirection.right),
                   backgroundColor: Colors.green,
-                  child: const Icon(Icons.favorite),
+                  child: Icon(Icons.favorite, size: buttonSize),
                 ),
               ],
             ),

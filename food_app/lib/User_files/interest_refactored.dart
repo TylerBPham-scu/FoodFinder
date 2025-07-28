@@ -1,9 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'dart:convert';
 import 'package:food_app/food_cards/food_swiper_refactored.dart';
 
 class LocationScreen extends StatefulWidget {
@@ -22,29 +22,38 @@ class LocationScreen extends StatefulWidget {
 
 class _LocationScreenState extends State<LocationScreen> {
   LatLng? _userLocation;
-  final List<String> foodOptions = [
-    'Spicy',
-    'Vegan',
-    'Gluten-Free',
-    'Sweet',
-    'Seafood',
-    'BBQ',
-  ];
+  final List<String> foodOptions = ['Spicy', 'Vegan', 'Gluten-Free', 'Sweet', 'Seafood', 'BBQ'];
   final Set<String> selectedOptions = {};
 
   Future<void> _getCurrentLocation() async {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => const Center(child: CircularProgressIndicator()),
-  );
+    _showLoadingDialog();
 
-  try {
+    try {
+      if (!await _checkLocationServices()) return;
+
+      final Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+
+      setState(() {
+        _userLocation = LatLng(position.latitude, position.longitude);
+      });
+
+      await _sendLocationToServer(position.latitude, position.longitude);
+      widget.swiperKey.currentState?.fetchFoodItems();
+
+      if (context.mounted) Navigator.pop(context);
+      _showSnackBar('Updated nearby food cards.');
+    } catch (e) {
+      if (context.mounted) Navigator.pop(context);
+      _showSnackBar("Error: $e");
+    }
+  }
+
+  Future<bool> _checkLocationServices() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       _showSnackBar("Location services are disabled.");
       Navigator.pop(context);
-      return;
+      return false;
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
@@ -53,38 +62,18 @@ class _LocationScreenState extends State<LocationScreen> {
       if (permission == LocationPermission.denied) {
         _showSnackBar("Location permissions are denied.");
         Navigator.pop(context);
-        return;
+        return false;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
       _showSnackBar("Location permissions are permanently denied.");
       Navigator.pop(context);
-      return;
+      return false;
     }
 
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    setState(() {
-      _userLocation = LatLng(position.latitude, position.longitude);
-    });
-
-    await _sendLocationToServer(position.latitude, position.longitude);
-
-    // ✅ Trigger card refresh
-    widget.swiperKey.currentState?.fetchFoodItems();
-
-    // ✅ Close spinner
-    if (context.mounted) Navigator.pop(context);
-
-    _showSnackBar('Updated nearby food cards.');
-  } catch (e) {
-    if (context.mounted) Navigator.pop(context);
-    _showSnackBar("Error: $e");
+    return true;
   }
-}
 
   Future<void> _sendLocationToServer(double lat, double lng) async {
     final url = Uri.parse('http://127.0.0.1:5000/update_location');
@@ -106,6 +95,14 @@ class _LocationScreenState extends State<LocationScreen> {
     }
   }
 
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+  }
+
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
@@ -116,15 +113,9 @@ class _LocationScreenState extends State<LocationScreen> {
     return ChoiceChip(
       label: Text(option),
       selected: isSelected,
-      onSelected: (_) {
-        setState(() {
-          if (isSelected) {
-            selectedOptions.remove(option);
-          } else {
-            selectedOptions.add(option);
-          }
-        });
-      },
+      onSelected: (_) => setState(() {
+        isSelected ? selectedOptions.remove(option) : selectedOptions.add(option);
+      }),
       selectedColor: Colors.blueAccent,
       backgroundColor: Colors.grey[200],
       labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
@@ -132,35 +123,33 @@ class _LocationScreenState extends State<LocationScreen> {
   }
 
   Widget _buildMap() {
-    if (_userLocation == null) {
-      return const Text("Press 'Start Search' to get your location.");
-    }
-
-    return SizedBox(
-      height: 300,
-      child: FlutterMap(
-        options: MapOptions(
-          initialCenter: _userLocation!,
-          initialZoom: 15,
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.example.app',
-          ),
-          MarkerLayer(
-            markers: [
-              Marker(
-                width: 40,
-                height: 40,
-                point: _userLocation!,
-                child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
+    return _userLocation == null
+        ? const Text("Press 'Start Search' to get your location.")
+        : SizedBox(
+            height: 300,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: _userLocation!,
+                initialZoom: 15,
               ),
-            ],
-          ),
-        ],
-      ),
-    );
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.app',
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      width: 40,
+                      height: 40,
+                      point: _userLocation!,
+                      child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
   }
 
   @override

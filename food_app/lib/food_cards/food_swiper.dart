@@ -1,4 +1,5 @@
 // food_card_swiper_screen.dart
+/*
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'food_card.dart';
@@ -120,3 +121,4 @@ class FoodCardSwiperScreenState extends State<FoodCardSwiperScreen> {
     );
   }
 }
+*/
